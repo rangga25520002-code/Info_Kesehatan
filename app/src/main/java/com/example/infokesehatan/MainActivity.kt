@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -32,6 +33,8 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +42,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.infokesehatan.ui.theme.InfoKesehatanTheme
 
 
@@ -51,7 +57,7 @@ class MainActivity : ComponentActivity() {
             InfoKesehatanTheme {
                 Scaffold(
                     bottomBar = {
-                        BottomNavigation()
+                        Navigation()
                     }
                 ) { padding ->
                     HomeScreen(
@@ -252,10 +258,9 @@ fun HomeScreen(
 }
 
 @Composable
-private fun BottomNavigation(modifier: Modifier = Modifier) {
+fun BottomNavigation(navController: NavController) {
     NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = modifier
+        containerColor = MaterialTheme.colorScheme.surfaceVariant
     ) {
         NavigationBarItem(
             icon = {
@@ -272,7 +277,7 @@ private fun BottomNavigation(modifier: Modifier = Modifier) {
                 )
             },
             selected = true,
-            onClick = {}
+            onClick = { navController.navigate("homescreen") }
         )
         NavigationBarItem(
             icon = {
@@ -289,9 +294,144 @@ private fun BottomNavigation(modifier: Modifier = Modifier) {
                 )
             },
             selected = false,
-            onClick = {}
+            onClick = {navController.navigate("profilescreen")}
         )
     }
 }
 
 
+@Composable
+fun SamplingNavigationRail(
+    navController: NavController,
+    modifier: Modifier = Modifier
+) {
+    NavigationRail(
+        modifier = modifier.padding(
+            start = 8.dp,
+            end = 8.dp
+        ),
+
+        containerColor = MaterialTheme.colorScheme.background
+
+    ) {
+
+        Column(
+            modifier = modifier.fillMaxHeight(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+
+        ) {
+
+            NavigationRailItem(
+
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Home,
+                        contentDescription = null
+                    )
+                },
+
+                label = {
+                    Text(
+                        stringResource(
+                            R.string.bottom_navigation_home
+                        )
+                    )
+                },
+
+                selected = true,
+
+                onClick = {
+                    navController.navigate("homescreen")
+                }
+            )
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+            NavigationRailItem(
+
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = null
+                    )
+                },
+
+                label = {
+                    Text(
+                        stringResource(
+                            R.string.bottom_navigation_profile
+                        )
+                    )
+                },
+
+                selected = false,
+
+                onClick = {
+                    navController.navigate("profilescreen")
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun AppPreview(navController: NavController) {
+
+    InfoKesehatanTheme {
+
+        Scaffold(
+            bottomBar = {
+                BottomNavigation(navController)
+            }
+
+        ) { padding ->
+
+            HomeScreen(
+                Modifier.padding(padding)
+            )
+        }
+    }
+}
+
+@Composable
+fun AppLandscape(
+    navController: NavController
+) {
+
+    Row {
+
+        SamplingNavigationRail(navController)
+
+        AppPreview(navController)
+    }
+}
+
+@Composable
+fun MyHealthApp(
+    navController: NavController
+) {
+
+    val windowSize = currentWindowAdaptiveInfo().windowSizeClass
+
+    when (windowSize.widthSizeClass) {
+
+        WindowWidthSizeClass.Compact -> {
+            AppPreview(navController)
+        }
+
+        WindowWidthSizeClass.Medium -> {
+            AppPreview(navController)
+        }
+
+        WindowWidthSizeClass.Expanded -> {
+            AppLandscape(navController)
+        }
+
+        else -> {
+            AppPreview(navController)
+        }
+    }
+}
