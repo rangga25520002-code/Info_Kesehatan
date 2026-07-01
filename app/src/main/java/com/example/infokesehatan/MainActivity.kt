@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -34,7 +35,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.window.core.layout.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +47,9 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.compose.runtime.getValue
 import com.example.infokesehatan.ui.theme.InfoKesehatanTheme
 
 
@@ -55,15 +59,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             InfoKesehatanTheme {
-                Scaffold(
-                    bottomBar = {
-                        Navigation()
-                    }
-                ) { padding ->
-                    HomeScreen(
-                        modifier = Modifier.padding(padding)
-                    )
-                }
+                Navigation()
             }
         }
     }
@@ -259,6 +255,9 @@ fun HomeScreen(
 
 @Composable
 fun BottomNavigation(navController: NavController) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceVariant
     ) {
@@ -276,8 +275,16 @@ fun BottomNavigation(navController: NavController) {
                     )
                 )
             },
-            selected = true,
-            onClick = { navController.navigate("homescreen") }
+            selected = currentRoute == "homescreen",
+            onClick = {
+                navController.navigate("homescreen") {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
         )
         NavigationBarItem(
             icon = {
@@ -293,8 +300,16 @@ fun BottomNavigation(navController: NavController) {
                     )
                 )
             },
-            selected = false,
-            onClick = {navController.navigate("profilescreen")}
+            selected = currentRoute == "profilescreen",
+            onClick = {
+                navController.navigate("profilescreen") {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
         )
     }
 }
@@ -305,6 +320,9 @@ fun SamplingNavigationRail(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
     NavigationRail(
         modifier = modifier.padding(
             start = 8.dp,
@@ -339,10 +357,16 @@ fun SamplingNavigationRail(
                     )
                 },
 
-                selected = true,
+                selected = currentRoute == "homescreen",
 
                 onClick = {
-                    navController.navigate("homescreen")
+                    navController.navigate("homescreen") {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
             )
 
@@ -367,10 +391,16 @@ fun SamplingNavigationRail(
                     )
                 },
 
-                selected = false,
+                selected = currentRoute == "profilescreen",
 
                 onClick = {
-                    navController.navigate("profilescreen")
+                    navController.navigate("profilescreen") {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
             )
         }
@@ -378,34 +408,32 @@ fun SamplingNavigationRail(
 }
 
 @Composable
-fun AppPreview(navController: NavController) {
+fun AppScaffold(
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    content: @Composable (PaddingValues) -> Unit
+) {
+    val windowSize = currentWindowAdaptiveInfo().windowSizeClass
 
-    InfoKesehatanTheme {
-
+    if (windowSize.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED) {
+        Surface(
+            color = MaterialTheme.colorScheme.background,
+            modifier = modifier.fillMaxSize()
+        ) {
+            Row {
+                SamplingNavigationRail(navController)
+                content(PaddingValues())
+            }
+        }
+    } else {
         Scaffold(
             bottomBar = {
                 BottomNavigation(navController)
-            }
-
+            },
+            modifier = modifier
         ) { padding ->
-
-            HomeScreen(
-                Modifier.padding(padding)
-            )
+            content(padding)
         }
-    }
-}
-
-@Composable
-fun AppLandscape(
-    navController: NavController
-) {
-
-    Row {
-
-        SamplingNavigationRail(navController)
-
-        AppPreview(navController)
     }
 }
 
@@ -413,25 +441,7 @@ fun AppLandscape(
 fun MyHealthApp(
     navController: NavController
 ) {
-
-    val windowSize = currentWindowAdaptiveInfo().windowSizeClass
-
-    when (windowSize.widthSizeClass) {
-
-        WindowWidthSizeClass.Compact -> {
-            AppPreview(navController)
-        }
-
-        WindowWidthSizeClass.Medium -> {
-            AppPreview(navController)
-        }
-
-        WindowWidthSizeClass.Expanded -> {
-            AppLandscape(navController)
-        }
-
-        else -> {
-            AppPreview(navController)
-        }
+    AppScaffold(navController) { padding ->
+        HomeScreen(Modifier.padding(padding))
     }
 }

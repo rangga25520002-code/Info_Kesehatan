@@ -22,11 +22,7 @@ fun ProfileScreen(
     navController: NavController
 ) {
 
-    Scaffold(
-        bottomBar = {
-            BottomNavigation(navController)
-        },
-    ) { padding ->
+    AppScaffold(navController) { padding ->
 
         Column(
             modifier = Modifier
